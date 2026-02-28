@@ -1,3 +1,5 @@
+# MIDI WLED v10 — WS2815 Fade Off Fix
+
 It appears that when multiple LEDs are fading simultaneously, instead of fading in parallel, they fade in series, resulting in 2 LEDs fading in 1000ms, 5 fading LEDs fading in 5000ms, etc.
 
 ---
