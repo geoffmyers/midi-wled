@@ -1,3 +1,11 @@
+---
+title: Configuration
+created: 2026-01-28
+modified: 2026-01-28
+description: "GPIO_PIN = 18  # GPIO pin connected to the LEDs (PWM pin, use 18 for Raspberry Pi) NUM_LEDS = 144  # Total LEDs on the WS2815 strip LED_FREQ_HZ = 800000  # LED signal frequency in hertz (800kHz for..."
+tags: [music]
+---
+
 Modify the script so that each octave is mapped to the full color spectrum (e.g. all "C" notes are red).
 
 ---

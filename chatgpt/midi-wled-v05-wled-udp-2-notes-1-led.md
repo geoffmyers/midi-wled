@@ -1,3 +1,11 @@
+---
+title: Configuration
+created: 2026-01-28
+modified: 2026-01-28
+description: "WLED_IP = \"10.0.10.142\"  # Replace with your WLED device IP address WLED_PORT = 21324  # Default UDP port for WLED realtime protocol NUM_LEDS = 44  # Total LEDs (88 keys / 2) BASE_NOTE = 40  # MIDI..."
+tags: [music]
+---
+
 Modify the following Python script so that instead of a 1-to-1 mapping of piano keys to LED lights, there is a 1-to-2 mapping of piano keys to LED lights (88 keys mapped to 44 lights):
 
 [...]
