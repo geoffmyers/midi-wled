@@ -90,6 +90,6 @@ venv/bin/python list-midi-ports.py
 - `python-rtmidi` 1.5.8 (MIDI I/O)
 - `aseqdump` (ALSA utils, for piano-lights.py)
 
-## Author
+## License
 
-Geoff Myers
+This project is licensed under the GNU General Public License v2.0 - see the [LICENSE.md](LICENSE.md) file for details.
