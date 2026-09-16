@@ -1,8 +1,3 @@
----
-title: Architecture
-description: How MIDI input is mapped to addressable LED output on a Raspberry Pi.
----
-
 # Architecture
 
 A set of small Python scripts that read MIDI and drive a WS281x LED strip,

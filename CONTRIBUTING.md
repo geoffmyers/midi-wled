@@ -1,8 +1,3 @@
----
-title: Contributing
-description: How to set up, change and submit improvements to Midi Wled.
----
-
 # Contributing to Midi Wled
 
 Thanks for taking an interest. This project is developed inside a private

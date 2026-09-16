@@ -1,11 +1,3 @@
----
-title: CLAUDE.md - MIDI WLED
-created: 2026-02-06
-modified: 2026-02-06
-description: "A Raspberry Pi project that maps MIDI piano input to a WS2815 LED strip (144 LEDs) for real-time piano key visualization. Includes live performance lighting, MIDI file playback with synchronized..."
-tags: [music, claude]
----
-
 # CLAUDE.md - MIDI WLED
 
 ## Project Overview
