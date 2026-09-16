@@ -125,6 +125,11 @@ driven by [rpi-ws281x](https://github.com/rpi-ws281x/rpi-ws281x-python).
 Interoperates with [WLED](https://kno.wled.ge/), which is an independent
 project and not affiliated with this one.
 
+## Architecture
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) for how the project fits together — the
+layout, the data flow, and the constraints worth knowing before changing it.
+
 ## Contributing
 
 Bug reports and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md)
