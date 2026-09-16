@@ -1,4 +1,4 @@
-# Contributing to Midi Wled
+# Contributing to MIDI WLED
 
 Thanks for taking an interest. This project is developed inside a private
 mono repo and published here as a snapshot, which shapes a couple of the
