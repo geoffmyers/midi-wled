@@ -16,6 +16,24 @@ pip install -r requirements.txt
 ```
 
 
+## Checks
+
+<!-- CHECKS:START -->
+Every push and pull request runs these checks in GitHub Actions
+([`.github/workflows/checks.yml`](.github/workflows/checks.yml)), and every release has passed them.
+To run one yourself, use the same commands from the directory shown.
+
+**compile** (Python 3.12, from the repository root):
+
+```bash
+python -m compileall -q .
+```
+
+<!-- CHECKS:END -->
+
+The scripts drive the LED strip through the Raspberry Pi's GPIO, so CI can only
+check that they compile. Test a change on a Pi with the strip attached.
+
 ## Before you open a pull request
 
 - Keep the change focused. One concern per PR is much easier to review.
