@@ -6,17 +6,6 @@
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 <!-- BADGES:END -->
 
-## Description
-
-A set of Python scripts for a Raspberry Pi that turns a WS2815 LED strip into a
-light bar for a piano. Each key you play lights two LEDs, coloured by its place
-in the octave and as bright as you played it. The same strip can follow a MIDI
-file while it plays through your instrument, or run a song one note at a time
-and wait for you to play each one.
-
-Despite the name, the project does **not** use [WLED](https://kno.wled.ge/). The
-scripts drive the strip directly from the Pi's GPIO through `rpi-ws281x`.
-
 ## Table of Contents
 
 - [Description](#description)
@@ -33,6 +22,17 @@ scripts drive the strip directly from the Pi's GPIO through `rpi-ws281x`.
 - [Credits](#credits)
 - [Contributing](#contributing)
 - [License](#license)
+
+## Description
+
+A set of Python scripts for a Raspberry Pi that turns a WS2815 LED strip into a
+light bar for a piano. Each key you play lights two LEDs, coloured by its place
+in the octave and as bright as you played it. The same strip can follow a MIDI
+file while it plays through your instrument, or run a song one note at a time
+and wait for you to play each one.
+
+Despite the name, the project does **not** use [WLED](https://kno.wled.ge/). The
+scripts drive the strip directly from the Pi's GPIO through `rpi-ws281x`.
 
 ## Features
 
