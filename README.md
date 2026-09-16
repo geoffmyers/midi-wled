@@ -1,5 +1,12 @@
 # MIDI WLED - Piano LED Visualizer
 
+<!-- BADGES:START -->
+![mido 1.3.3](https://img.shields.io/badge/mido-1.3.3-306998?style=flat-square)
+[![Licence GPL--2.0](https://img.shields.io/badge/licence-GPL--2.0-blue?style=flat-square)](LICENSE.md)
+[![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
+<!-- BADGES:END -->
+
+
 A Raspberry Pi project that connects a MIDI keyboard to a WS2815 LED strip, creating real-time piano key visualizations. Notes light up with octave-based colors and velocity-based brightness. Also supports MIDI file playback with synchronized LEDs and an interactive song-learning mode.
 
 ## Features
