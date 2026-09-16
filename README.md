@@ -6,7 +6,6 @@
 [![PRs welcome](https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 <!-- BADGES:END -->
 
-
 A Raspberry Pi project that connects a MIDI keyboard to a WS2815 LED strip, creating real-time piano key visualizations. Notes light up with octave-based colors and velocity-based brightness. Also supports MIDI file playback with synchronized LEDs and an interactive song-learning mode.
 
 ## Features
@@ -133,9 +132,8 @@ layout, the data flow, and the constraints worth knowing before changing it.
 ## Contributing
 
 Bug reports and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md)
-for setup, checks and how this repository is published, and
-[ARCHITECTURE.md](ARCHITECTURE.md) for how the project fits together.
+for setup, checks and how this repository is published.
 
 ## License
 
-This project is licensed under the GNU General Public License v2.0. See [LICENSE](LICENSE) for details.
+This project is licensed under the GNU General Public License v2.0. See [LICENSE.md](LICENSE.md) for details.
