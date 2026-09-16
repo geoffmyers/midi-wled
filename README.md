@@ -109,6 +109,21 @@ Edit constants at the top of each Python script:
 - GPIO pin 18 (PWM0) conflicts with onboard audio on Raspberry Pi.
 - Each MIDI note maps to 2 consecutive LEDs.
 
+## Credits
+
+MIDI I/O by [mido](https://mido.readthedocs.io/) and
+[python-rtmidi](https://spotlightkid.github.io/python-rtmidi/). LED output
+driven by [rpi-ws281x](https://github.com/rpi-ws281x/rpi-ws281x-python).
+
+Interoperates with [WLED](https://kno.wled.ge/), which is an independent
+project and not affiliated with this one.
+
+## Contributing
+
+Bug reports and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md)
+for setup, checks and how this repository is published, and
+[ARCHITECTURE.md](ARCHITECTURE.md) for how the project fits together.
+
 ## License
 
 This project is licensed under the GNU General Public License v2.0. See [LICENSE](LICENSE) for details.
