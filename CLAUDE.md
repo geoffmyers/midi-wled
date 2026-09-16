@@ -13,7 +13,7 @@ A Raspberry Pi project that maps MIDI piano input to a WS2815 LED strip (144 LED
 - `configure-python.sh` - Sets up Python 3 venv and installs dependencies
 - `start-tmux.sh` - Launches `piano-lights.py` in a detached tmux session (for autostart)
 - `requirements.txt` - Python dependencies: `mido`, `rpi-ws281x`, `python-rtmidi`
-- `midi/` - MIDI file collection (32 files)
+- `midi/` - MIDI file collection (32 files, private: their sources and licences were never recorded, so `midi/**` is excluded from the public snapshot; the public README tells users to bring their own)
 - `chatgpt/` - ChatGPT conversation exports used during development
 - `old/` - Previous script versions
 - `.github/` - GitHub Actions workflows

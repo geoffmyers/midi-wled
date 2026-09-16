@@ -10,7 +10,7 @@ intended to sit behind or above a piano keyboard.
 | `piano-lights.py` | The main loop — open a MIDI port, map notes to LEDs, render. |
 | `play-song.py`, `learn-song.py` | Play a MIDI file through your instrument with the strip in sync; `learn-song.py` waits for you to play each note. |
 | `list-midi-ports.py`, `dump-midi-in.sh` | Diagnostics for finding and inspecting an input device. |
-| `midi/` | Song data. |
+| `midi/` | Your song files, if you keep them here. None are published: see *Getting MIDI files* in the README. |
 | `configure-python.sh`, `start-tmux.sh` | Host setup and a long-running session wrapper. |
 
 ## Notes

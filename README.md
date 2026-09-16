@@ -14,6 +14,7 @@
 - [Installation](#installation)
 - [Usage](#usage)
   - [Live lights](#live-lights)
+  - [Getting MIDI files](#getting-midi-files)
   - [Playing a MIDI file](#playing-a-midi-file)
   - [Learning a song](#learning-a-song)
   - [Finding your MIDI ports](#finding-your-midi-ports)
@@ -44,13 +45,15 @@ scripts drive the strip directly from the Pi's GPIO through `rpi-ws281x`.
 - **Sustain pedal support** in live mode: held notes stay lit until the pedal
   (MIDI CC 64) is released.
 - **MIDI file playback** through your instrument with the strip in sync,
-  including tempo override, speed percentage, repeat and a fade-out on note
-  release. Drum-channel notes are skipped.
+  including tempo override, speed percentage, repeat, full velocity, piano-only
+  and all-piano options, and a fade-out on note release. Each part keeps its own
+  instrument sound. Drum-channel notes are skipped.
 - **A terminal view.** `--ascii` draws the active notes across an 88-key row in
   24-bit colour while a file plays.
 - **Learn-a-song mode** that pauses after every note until you play it, skipping
   the drum channel.
-- **32 MIDI files included** in `midi/`, from *Für Elise* to *Super Mario Bros.*
+- **Works with any Standard MIDI File** you supply. The repository ships
+  none; see [Getting MIDI files](#getting-midi-files).
 - **Headless start-up** in a detached `tmux` session.
 
 ## Requirements
@@ -119,6 +122,19 @@ To keep it running after you log out:
 tmux attach -t piano-lights
 ```
 
+### Getting MIDI files
+
+No songs are included: a MIDI file is someone's arrangement, and most songs are
+also under copyright, so each file needs a licence that lets you use it. The
+[Mutopia Project](https://www.mutopiaproject.org/) publishes free MIDI files of
+public-domain music, each with its licence stated. Put your files anywhere; the
+examples below use a `midi/` folder in the project directory:
+
+```bash
+mkdir -p midi
+cp ~/Downloads/fur-elise.mid midi/
+```
+
 ### Playing a MIDI file
 
 ```bash
@@ -131,20 +147,18 @@ and key, then sends the notes to your MIDI output port while lighting the strip.
 
 | Flag | Effect |
 |---|---|
-| `--max-velocity` | Play every note at full velocity (127) |
-| `--bpm N` | Play at N beats per minute |
+| `--max-velocity` | Send and light every note at full velocity (127) |
+| `--bpm N` | Play at N beats per minute; later tempo changes in the file keep their proportions |
 | `--speed-percent N` | Play at N% of the original speed, e.g. `50` for half speed |
 | `--repeat` | Loop the file |
 | `--ascii` | Draw the active notes in the terminal |
 | `--fade` | Fade LEDs out on note release instead of switching them off |
-| `--piano-only` | Meant to drop non-piano program changes. **No audible effect yet** (see below) |
-| `--force-piano` | Meant to switch every part to acoustic grand piano. **No audible effect yet** (see below) |
+| `--piano-only` | Play only the parts set to a piano sound (General MIDI programs 1–8); the rest stay silent and dark |
+| `--force-piano` | Switch every part to acoustic grand piano |
 
-**Known issue:** `play-song.py` forwards only note messages to the output port,
-never program changes, so your instrument plays every part with whatever sound
-it already has selected. That is why `--piano-only` and `--force-piano`
-currently change nothing. Notes on the drum channel (MIDI channel 10) are never
-sent.
+The file's program changes are sent to your instrument, so on a General MIDI
+instrument each part plays with the sound the file asks for. Notes on the drum
+channel (MIDI channel 10) are never sent.
 
 ### Learning a song
 
@@ -204,7 +218,7 @@ MIDI file ──► mido ──► play-song.py / learn-song.py ─┘
 | `learn-song.py` | Plays a file and blocks on each note until the keyboard sends it |
 | `list-midi-ports.py`, `dump-midi-in.sh` | Diagnostics for finding the right ports |
 | `configure-python.sh`, `start-tmux.sh` | Setup and a background session |
-| `midi/` | The bundled MIDI files |
+| `midi/` | Where the examples keep your MIDI files; none are included |
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for more on the mapping and the
 constraints of driving the strip.
@@ -227,8 +241,6 @@ Bug reports and pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md
 for setup, checks and how this repository is published.
 
 ## License
-
-Copyright © 2024–2026 Geoff Myers
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU General Public License as published by the Free Software

@@ -23,11 +23,11 @@ MIDI_OUTPUT_PORT = "CH345:CH345 MIDI 1 20:0"
 parser = argparse.ArgumentParser(description="Play MIDI file and control LEDs.")
 parser.add_argument("midi_file", type=str, help="Path to the MIDI file")
 parser.add_argument("--max-velocity", action="store_true", help="Play all notes at maximum velocity (127)")
-parser.add_argument("--piano-only", action="store_true", help="Play only piano instrument notes")
+parser.add_argument("--piano-only", action="store_true", help="Play only the parts whose instrument is a piano (General MIDI programs 1-8)")
 parser.add_argument("--bpm", type=int, default=None, help="Play MIDI file at specified BPM")
 parser.add_argument("--repeat", action="store_true", help="Repeat playback on loop")
-parser.add_argument("--speed-percent", type=int, default=100, help="Play MIDI file at a percentage of the original speed (e.g., 50)")
-parser.add_argument("--force-piano", action="store_true", help="Force all notes to be played as an acoustic grand piano")
+parser.add_argument("--speed-percent", type=int, default=100, help="Play MIDI file at a percentage of the original speed (e.g., 50 for half speed)")
+parser.add_argument("--force-piano", action="store_true", help="Switch every part to acoustic grand piano")
 parser.add_argument("--ascii", action="store_true", help="Enable ASCII visualization of MIDI notes")
 parser.add_argument("--fade", action="store_true", help="Enable fading of LEDs when notes are turned off")
 args = parser.parse_args()
@@ -38,6 +38,8 @@ PIANO_ONLY = args.piano_only
 USER_BPM = args.bpm
 REPEAT = args.repeat
 SPEED_PERCENT = args.speed_percent
+if SPEED_PERCENT <= 0:
+    parser.error("--speed-percent must be above 0")
 FORCE_PIANO = args.force_piano
 ASCII_VISUALIZATION = args.ascii
 FADE_LEDS = args.fade
@@ -190,16 +192,26 @@ def is_piano_program(program):
     """Check if a program change corresponds to a piano instrument (General MIDI 0–7)."""
     return 0 <= program <= 7
 
+MAX_TEMPO = 0xFFFFFF  # set_tempo holds microseconds per beat in 24 bits
+
 def adjust_tempo(midi, tempo_ratio):
-    """Adjust the tempo of a MIDI file by a given ratio."""
-    new_midi = MidiFile()
-    for track in midi.tracks:
+    """Return a copy of `midi` with every tempo multiplied by `tempo_ratio`.
+
+    A tempo is microseconds per beat, so a ratio above 1 plays slower. Only the
+    tempos change. Scaling the note delays as well applied the change twice (and
+    only to notes, not to the pedal and other messages between them), and a
+    fresh MidiFile() dropped the file's ticks_per_beat.
+    """
+    new_midi = MidiFile(type=midi.type, ticks_per_beat=midi.ticks_per_beat)
+    has_tempo = any(msg.type == "set_tempo" for track in midi.tracks for msg in track)
+    for index, track in enumerate(midi.tracks):
         new_track = MidiTrack()
+        if index == 0 and not has_tempo:
+            # No tempo event means 120 BPM; state it so there is one to scale.
+            new_track.append(MetaMessage("set_tempo", tempo=min(MAX_TEMPO, int(500000 * tempo_ratio)), time=0))
         for msg in track:
             if msg.type == "set_tempo":
-                msg.tempo = int(msg.tempo * tempo_ratio)  # Correct tempo adjustment
-            elif msg.type in ["note_on", "note_off"]:
-                msg.time = int(msg.time * tempo_ratio)  # Correct time adjustment
+                msg = msg.copy(tempo=min(MAX_TEMPO, int(msg.tempo * tempo_ratio)))
             new_track.append(msg)
         new_midi.tracks.append(new_track)
     return new_midi
@@ -209,10 +221,9 @@ def play_midi_file():
     try:
         midi = MidiFile(MIDI_FILE)
 
-        # Adjust playback speed
+        # Adjust playback speed: 50% speed means each beat lasts twice as long
         if SPEED_PERCENT != 100:
-            speed_ratio = SPEED_PERCENT / 100.0
-            midi = adjust_tempo(midi, speed_ratio)
+            midi = adjust_tempo(midi, 100.0 / SPEED_PERCENT)
 
         # Adjust playback tempo
         if USER_BPM:
@@ -232,13 +243,25 @@ def play_midi_file():
 
         with open_output(MIDI_OUTPUT_PORT) as output:
             while True:
+                # The instrument each channel is set to; General MIDI starts on piano.
+                channel_program = {}
+                if FORCE_PIANO:
+                    for channel in range(16):
+                        if channel != 9:
+                            output.send(Message('program_change', program=0, channel=channel))
                 for msg in midi.play():
                     if msg.type == 'program_change':
-                        if PIANO_ONLY and not is_piano_program(msg.program):
-                            continue
-                        if FORCE_PIANO:
-                            msg = Message('program_change', program=0, channel=msg.channel)
-                    if msg.type in ['note_on', 'note_off'] and msg.channel != 9:
+                        # Program changes go to the instrument too, or every part
+                        # plays with whatever sound it already had selected.
+                        channel_program[msg.channel] = msg.program
+                        output.send(msg.copy(program=0) if FORCE_PIANO else msg)
+                    elif msg.type in ['note_on', 'note_off'] and msg.channel != 9:
+                        is_start = msg.type == 'note_on' and msg.velocity > 0
+                        if (is_start and PIANO_ONLY
+                                and not is_piano_program(channel_program.get(msg.channel, 0))):
+                            continue  # releases always pass, so no note is left hanging
+                        if is_start and MAX_VELOCITY:
+                            msg = msg.copy(velocity=127)
                         handle_midi_message(msg)
                         output.send(msg)
                 if not REPEAT:
