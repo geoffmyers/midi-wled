@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/icon.svg" width="96" height="96" alt="MIDI WLED icon">
+</p>
+
 # MIDI WLED - Piano LED Visualizer
 
 <!-- BADGES:START -->
@@ -232,6 +236,8 @@ constraints of driving the strip.
 - [WLED](https://kno.wled.ge/) is an independent project. Despite this
   repository's name it is not used here, and it is not affiliated with this
   project.
+- The README icon is the [Font Awesome](https://fontawesome.com/) `lightbulb` glyph,
+  used under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 Written by Geoff Myers.
 
