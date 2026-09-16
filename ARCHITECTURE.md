@@ -8,7 +8,7 @@ intended to sit behind or above a piano keyboard.
 | Path | What lives there |
 |---|---|
 | `piano-lights.py` | The main loop — open a MIDI port, map notes to LEDs, render. |
-| `learn-song.py`, `play-song.py` | Record and replay note sequences for practice. |
+| `play-song.py`, `learn-song.py` | Play a MIDI file through your instrument with the strip in sync; `learn-song.py` waits for you to play each note. |
 | `list-midi-ports.py`, `dump-midi-in.sh` | Diagnostics for finding and inspecting an input device. |
 | `midi/` | Song data. |
 | `configure-python.sh`, `start-tmux.sh` | Host setup and a long-running session wrapper. |
@@ -19,5 +19,5 @@ intended to sit behind or above a piano keyboard.
   needs root (or the appropriate capability) for PWM/DMA access.
 - Note-to-LED mapping depends on the physical strip density and where it sits
   relative to the keys; that offset is the first thing to adjust.
-- `old/` and `chatgpt/` hold earlier experiments and are not part of the running
-  program.
+- Each script carries its own copy of the configuration constants and the
+  note-to-LED mapping; a change to one has to be repeated in the others.
