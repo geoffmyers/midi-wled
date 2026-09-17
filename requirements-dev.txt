@@ -1,0 +1,9 @@
+# Test-only dependencies. Deliberately does NOT include rpi-ws281x: it's a
+# hardware extension that only builds against a Raspberry Pi's GPIO/DMA
+# headers, so tests install a fake in its place (see tests/conftest.py).
+# mido IS needed here (not just in requirements.txt) -- test_play_song.py
+# builds real mido.MidiFile/MidiTrack fixtures for adjust_tempo(), so
+# `pip install -r requirements-dev.txt` alone must be able to run the suite
+# on a machine that never installed requirements.txt at all.
+mido==1.3.3
+pytest==8.3.5

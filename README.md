@@ -23,6 +23,7 @@
   - [Learning a song](#learning-a-song)
   - [Finding your MIDI ports](#finding-your-midi-ports)
 - [Configuration](#configuration)
+- [Testing](#testing)
 - [Architecture](#architecture)
 - [Credits](#credits)
 - [Contributing](#contributing)
@@ -184,15 +185,16 @@ aseqdump -l                          # ALSA port numbers (piano-lights)
 
 ## Configuration
 
-Settings are constants at the top of each script. Edit them in every script you
-use; they are not shared.
+The LED/GPIO constants and the note-to-LED mapping live in one shared module,
+`led_piano.py`, imported by all three scripts below — edit them once. Each
+script keeps its own MIDI port name(s), since those are specific to its role.
 
-| Constant | Default | Used by | Meaning |
+| Constant | Default | Lives in | Meaning |
 |---|---|---|---|
-| `GPIO_PIN` | `18` | all LED scripts | GPIO pin for the strip's data line |
-| `NUM_LEDS` | `144` | all LED scripts | LEDs on the strip |
-| `LED_BRIGHTNESS` | `255` | all LED scripts | Overall brightness, 0–255 |
-| `BASE_NOTE` | `29` | all LED scripts | MIDI note lit by the first LED |
+| `GPIO_PIN` | `18` | `led_piano.py` | GPIO pin for the strip's data line |
+| `NUM_LEDS` | `144` | `led_piano.py` | LEDs on the strip |
+| `LED_BRIGHTNESS` | `255` | `led_piano.py` | Overall brightness, 0–255 |
+| `BASE_NOTE` | `29` | `led_piano.py` | MIDI note lit by the first LED |
 | `MIDI_PORT` | `20:0` | `piano-lights.py` | ALSA port passed to `aseqdump` |
 | `MIDI_OUTPUT_PORT` | `CH345:CH345 MIDI 1 20:0` | `play-song.py`, `learn-song.py` | mido output port for your instrument |
 | `MIDI_INPUT_PORT` | `CH345:CH345 MIDI 1 20:0` | `learn-song.py` | mido input port for your keyboard |
@@ -201,14 +203,33 @@ Each note lights LEDs `(note − BASE_NOTE) × 2` and the one after it. With the
 defaults, the 144 LEDs cover 72 notes, from MIDI note 29 (F1) to note 100 (E7).
 Notes outside that range are ignored.
 
+## Testing
+
+`led_piano.py` and the pure logic in each script (the note-to-LED mapping,
+colour and brightness math, `play-song.py`'s `adjust_tempo()`, and the
+note-on/note-off dispatch) have pytest unit tests that run on any machine —
+no Raspberry Pi or LED strip required. `rpi_ws281x` is a hardware extension
+that only builds against a Pi's GPIO/DMA headers, so the tests install a fake
+in its place (see `tests/conftest.py`) rather than depending on it.
+`requirements-dev.txt` pins everything the suite actually imports (including
+`mido`, for the real `MidiFile`/`MidiTrack` fixtures in
+`test_play_song.py`), so one install works whether or not `requirements.txt`
+is already on the machine:
+
+```bash
+python3 -m venv venv
+venv/bin/pip install -r requirements-dev.txt
+venv/bin/python -m pytest tests/ -v
+```
+
 ## Architecture
 
-Three independent scripts share one idea, a note-to-LED mapping, and each
-carries its own copy of it:
+Three independent scripts share one idea, a note-to-LED mapping, through one
+shared module, `led_piano.py`:
 
 ```
 USB MIDI keyboard ──► aseqdump ──► piano-lights.py ──┐
-                                                    ├──► rpi-ws281x ──► GPIO 18 ──► WS2815 strip
+                                                    ├──► led_piano.LedStrip ──► rpi-ws281x ──► GPIO 18 ──► WS2815 strip
 MIDI file ──► mido ──► play-song.py / learn-song.py ─┘
                           │
                           └──► mido output ──► your instrument
@@ -217,6 +238,7 @@ MIDI file ──► mido ──► play-song.py / learn-song.py ─┘
 
 | Path | Role |
 |---|---|
+| `led_piano.py` | Shared LED/GPIO constants, note-to-LED mapping, colour and brightness math, and the thread-safe `LedStrip` wrapper |
 | `piano-lights.py` | Live mode: parses `aseqdump` output line by line, with sustain-pedal handling |
 | `play-song.py` | File playback with tempo, speed, repeat, fade and terminal-view options |
 | `learn-song.py` | Plays a file and blocks on each note until the keyboard sends it |

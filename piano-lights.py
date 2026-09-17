@@ -1,110 +1,110 @@
-import threading
+"""Real-time MIDI-to-LED piano lighting via aseqdump.
+
+Live mode: parses `aseqdump` output line by line, with sustain-pedal handling.
+"""
+
 import subprocess
-from colorsys import hsv_to_rgb
-from rpi_ws281x import PixelStrip, Color
+import threading
 
-# Configuration
-GPIO_PIN = 18  # GPIO pin connected to the LEDs (PWM pin, use 18 for Raspberry Pi)
-NUM_LEDS = 144  # Total LEDs on the WS2815 strip
-LED_FREQ_HZ = 800000  # LED signal frequency in hertz (800kHz for WS2815)
-LED_DMA = 10  # DMA channel to use for generating the signal
-LED_BRIGHTNESS = 255  # Set to 0 for darkest and 255 for brightest
-LED_INVERT = False  # True if using an inverting logic level converter
-LED_CHANNEL = 0  # Set to 0 for PWM0
+import led_piano
 
-BASE_NOTE = 29  # MIDI note number for A0 = 21
 MIDI_PORT = "20:0"  # Update with your aseqdump port
 
-# State variables
-sustain_active = False
-active_notes = set()
 
-# Initialize the LED strip
-strip = PixelStrip(NUM_LEDS, GPIO_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
-strip.begin()
+class PianoLights:
+    """Maps live aseqdump note/control-change lines onto the LED strip."""
 
-def set_led_color(led_index, color):
-    """Set the color of a specific LED on the strip."""
-    if 0 <= led_index < NUM_LEDS:
-        strip.setPixelColor(led_index, Color(*color))  # Convert to GRB for WS2815
-        strip.show()
+    def __init__(self, strip, base_note=led_piano.BASE_NOTE):
+        self.strip = strip
+        self.base_note = base_note
+        self.sustain_active = False
+        self.active_notes = set()
 
-def generate_octave_color(note):
-    """Generate a color based on the note's position within its octave."""
-    notes_in_octave = 12  # Total notes in an octave
-    note_in_octave = (note - BASE_NOTE) % notes_in_octave  # Position within the octave
-    hue = note_in_octave / notes_in_octave  # Normalize to a range of 0-1
-    r, g, b = hsv_to_rgb(hue, 1.0, 1.0)  # Full saturation and brightness
-    return [int(r * 255), int(g * 255), int(b * 255)]
+    def handle_event(self, event_line):
+        """Process a single aseqdump event line."""
+        print(f"Received MIDI event: {event_line.strip()}")  # Log the MIDI event
 
-def adjust_brightness(color, velocity):
-    """Adjust color brightness based on velocity."""
-    brightness_scale = velocity / 127  # Normalize velocity to a range of 0-1
-    return [int(c * brightness_scale) for c in color]
+        if "Note on" in event_line:
+            parts = event_line.split(",")
+            note = int(parts[1].split()[1])
+            velocity = int(parts[2].split()[1])
+            if velocity > 0:
+                indices = led_piano.led_indices_for_note(note, self.base_note)
+                color = led_piano.adjust_brightness(
+                    led_piano.generate_octave_color(note, self.base_note), velocity
+                )
+                self.strip.set_pixels(indices, color)
+                self.active_notes.add(note)
+        elif "Note off" in event_line:
+            parts = event_line.split(",")
+            note = int(parts[1].split()[1])
+            if note in self.active_notes:
+                if not self.sustain_active:  # Only turn off LEDs if sustain is not active
+                    self.active_notes.remove(note)
+                    indices = led_piano.led_indices_for_note(note, self.base_note)
+                    self.strip.set_pixels(indices, [0, 0, 0])
+        elif "Control change" in event_line:
+            parts = event_line.split(",")
+            controller = int(parts[1].split()[1])
+            value = int(parts[2].split()[1])
+            if controller == 64:  # Sustain pedal (Controller 64)
+                self.sustain_active = value >= 64
+                if not self.sustain_active:
+                    # Turn off all LEDs for released notes when sustain is deactivated
+                    for note in list(self.active_notes):
+                        indices = led_piano.led_indices_for_note(note, self.base_note)
+                        self.strip.set_pixels(indices, [0, 0, 0])
+                    self.active_notes.clear()
 
-def handle_midi_event(event_line):
-    """Process a single MIDI event."""
-    global sustain_active, active_notes
+    @staticmethod
+    def start_aseqdump(midi_port):
+        return subprocess.Popen(["aseqdump", "--port", midi_port], stdout=subprocess.PIPE, text=True)
 
-    print(f"Received MIDI event: {event_line.strip()}")  # Log the MIDI event
+    def listen(self, midi_port=MIDI_PORT, process_factory=None):
+        """Run aseqdump and dispatch its output until it exits or is stopped.
 
-    if "Note on" in event_line:
-        parts = event_line.split(",")
-        note = int(parts[1].split()[1])
-        velocity = int(parts[2].split()[1])
-        led_index = (note - BASE_NOTE) * 2  # Map each note to two LEDs
-        if 0 <= led_index < NUM_LEDS and velocity > 0:
-            base_color = generate_octave_color(note)
-            color = adjust_brightness(base_color, velocity)
-            set_led_color(led_index, color)
-            set_led_color(led_index + 1, color)  # Light up the second LED
-            active_notes.add(note)  # Track the active note
-    elif "Note off" in event_line:
-        parts = event_line.split(",")
-        note = int(parts[1].split()[1])
-        led_index = (note - BASE_NOTE) * 2  # Map each note to two LEDs
-        if note in active_notes:
-            if not sustain_active:  # Only turn off LEDs if sustain is not active
-                active_notes.remove(note)
-                if 0 <= led_index < NUM_LEDS:
-                    set_led_color(led_index, [0, 0, 0])  # Turn off the first LED
-                    set_led_color(led_index + 1, [0, 0, 0])  # Turn off the second LED
-    elif "Control change" in event_line:
-        parts = event_line.split(",")
-        controller = int(parts[1].split()[1])
-        value = int(parts[2].split()[1])
-        if controller == 64:  # Sustain pedal (Controller 64)
-            sustain_active = value >= 64  # Sustain is active when value is 64 or higher
-            if not sustain_active:
-                # Turn off all LEDs for released notes when sustain is deactivated
-                for note in list(active_notes):
-                    led_index = (note - BASE_NOTE) * 2
-                    if 0 <= led_index < NUM_LEDS:
-                        set_led_color(led_index, [0, 0, 0])
-                        set_led_color(led_index + 1, [0, 0, 0])
-                active_notes.clear()
+        A dead aseqdump (keyboard unplugged, or the process was never able to
+        start) makes `process.stdout.readline()` return "" forever; without
+        checking `process.poll()` that is a silent, unthrottled 100%-CPU loop.
+        """
+        process = (process_factory or self.start_aseqdump)(midi_port)
+        try:
+            while True:
+                line = process.stdout.readline()
+                if line == "":
+                    if process.poll() is not None:
+                        print(
+                            f"aseqdump exited (return code {process.poll()}); "
+                            "is the MIDI device still connected? Stopping listener."
+                        )
+                        return
+                    # Pipe momentarily empty but process still alive: nothing
+                    # to do; readline() already blocks briefly on a live pipe,
+                    # so this isn't a busy spin.
+                    continue
+                if "Note" in line or "Control change" in line:
+                    self.handle_event(line)
+        finally:
+            if process.poll() is None:
+                process.terminate()
 
-def listen_to_midi():
-    """Listen to MIDI events using aseqdump."""
-    process = subprocess.Popen(
-        ["aseqdump", "--port", MIDI_PORT],
-        stdout=subprocess.PIPE,
-        text=True
-    )
-    while True:
-        line = process.stdout.readline()
-        if line and ("Note" in line or "Control change" in line):
-            handle_midi_event(line)
 
-# Start listening to MIDI events
-midi_thread = threading.Thread(target=listen_to_midi, daemon=True)
-midi_thread.start()
+def main():
+    strip = led_piano.LedStrip()
+    strip.begin()
+    lights = PianoLights(strip)
 
-print("Listening for MIDI events. Press Ctrl+C to exit.")
-try:
-    midi_thread.join()
-except KeyboardInterrupt:
-    print("Exiting.")
-    # Turn off all LEDs before exiting
-    for i in range(NUM_LEDS):
-        set_led_color(i, [0, 0, 0])
+    midi_thread = threading.Thread(target=lights.listen, daemon=True)
+    midi_thread.start()
+
+    print("Listening for MIDI events. Press Ctrl+C to exit.")
+    try:
+        midi_thread.join()
+    except KeyboardInterrupt:
+        print("Exiting.")
+    finally:
+        strip.clear()
+
+
+if __name__ == "__main__":
+    main()

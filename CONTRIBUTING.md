@@ -29,6 +29,16 @@ To run one yourself, use the same commands from the directory shown.
 python -m compileall -q .
 ```
 
+**tests** (Python 3.12, from the repository root):
+
+```bash
+python -m venv /tmp/venv
+. /tmp/venv/bin/activate
+pip install --quiet --upgrade pip
+pip install --quiet -r requirements-dev.txt
+python -m pytest -q tests
+```
+
 <!-- CHECKS:END -->
 
 The scripts drive the LED strip through the Raspberry Pi's GPIO, so CI can only
